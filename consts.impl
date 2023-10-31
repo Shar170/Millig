@@ -1,0 +1,66 @@
+#include <sstream>
+#include <iostream>
+
+bool flag_re = true;
+double 	r_min = 0.0001*pow(10, -6), //минимальный радиус (метры)
+		r_max = 50*pow(10, -6);		//максимальный радиус (метры)
+double 	f_max = 0;
+	//обезразмеривающие величины
+double t0 = 3600; //секунды
+double g0 = r_max;
+double r0 = r_max;
+double f0 = (2.7*pow(10,7)/(r0));
+double V0 = ((4.0 / 3.0)*  3.141596 * pow(r0, 3.0)); 
+double A0 = 1 / t0;
+double B0 = 1 / pow(g0,3);
+	//рабочие величины
+const int Num_T = 4; 				//кол-во потоков распараллевания 
+const int Nr = 3*pow(10, 3), Nt = 201;//количество шагов по радиусу и времени
+double	T_max = 1.5*60 * 60 / t0;	//конечное время дробления обезразмеренное
+double 	ps = 4000; 					//обезразмеренная плотность	
+double 	m_sphere = 80 * (3.0 / 6.0);// масса дробящих тел
+double	m_poroh = 80 * (1.0 / 6.0); // масса измельяаемого материала
+double	d_sphere = 5*pow(10, -3);	// диаметр дробящих тел
+double 	m0 = ps*V0*f0*r0;
+double 	N_particle = m_poroh/(3*4*pow(1.45*pow(10,-5),3)/3); //характеристическое число частиц
+double 	delta_r = (r_max/r0 - r_min/r0) / Nr;// шаг по радиусу обезразмеренный
+double averStartSize =23.7; //average start size in micron 
+double 	delta_t = T_max / (double(Nt)); 	//обезрамеренная
+double	L = 7.72;  	// 10.2; //0.0036;				//феноменологический коэфф.  пропорционален эффективности дробления
+double 	P = 0.17; 	//  1.00/60.0;//обратно пропорционален истиранию, 
+//при снижении снижает эффективность дробления, при снижении увеличивает потерю массы
+int 	D = 1;
+double 	K_vol = pow(D, 1.0/3.0);
+int 	Barrier_A = 30; 			//индекс частиц диаметром в 1 микрон, устойчивых к дроблению
+bool isBabkin = true;
+
+
+const double surfaceEnergy = 3.3646;
+double ro = 3214;
+const double b0 = 3.55189e+09;
+const double b1 = 5.21003e+09;
+const double b11 = 1.82714e+09;
+const double b2 = 3.34257e+08;
+const double b22 = 4.77981e+08;
+const double p1 = -1.05749;
+const double p2 = -0.60632;
+const double p3 = -0.00192;
+const double p33 = -0.192083;
+
+double sigma[] = {1.2, 2.3071, 2.7582,  3.3646};
+double x10 = 100.0;
+double x20 = 1000.0;
+double x1 = 250.0/x10;
+double x2 = 5720/x20;
+double c = 10; //weight in terms of dry matter
+int typePAV = -1;
+int typeMill = 0; //0-Babkin, 1-Ivannikov
+double size_search = 2.043*pow(10, -6)/(r0*2);//радиус частицы которую нужно получить 
+
+double
+		a0 = -93279971, a1 = -6658820, a2 = 783271474, a12 = 191562000, //получены на основе экспериментальных данных
+		z1 = (m_sphere / m_poroh), //отношение масс мелющих тел к порошку
+		z2 = pow(10, -3) / d_sphere,  //отнесённая к 1 миллиметру размер мелющих шаров (метр)
+		gammaBabk = 1.2; //поверхностная энергия Дж/м^2 (для корунда 1.2 без использования ПАВ)
+
+std::string endStr = "\r\n";
